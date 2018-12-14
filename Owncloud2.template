@@ -363,7 +363,7 @@
                                 "OCAdminPassword=\"", {"Ref" : "ownCloudPassword"},"\"\n",
                                 "\n",
                                 "IPA=`curl http://169.254.169.254/latest/meta-data/public-ipv4 | sed -r 's@\\.@-@g'`\n",
-                                "OCDomain=`curl http://169.254.169.254/latest/meta-data/local-ipv4`\n",
+                                "OCDomain=`curl http://169.254.169.254/latest/meta-data/public-hostname`\n",
                                 "\n",
                                 "service mysql start\n",
                                 "\n",
