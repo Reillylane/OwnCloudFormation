@@ -64,14 +64,6 @@
             ],
             "ConstraintDescription": "must be a valid EC2 instance type."
         },
-        "ImageId": {
-            "Description": "EC2 Image ID - Ubuntu Server 18.04 LTS (HVM), SSD Volume Type",
-            "Type": "String",
-            "Default": "ami-063aa838bd7631e0b",
-            "AllowedValues": [
-                "ami-063aa838bd7631e0b"
-            ]
-        },
         "SSHLocation": {
             "Description": "The IP address range that can be used to SSH to the EC2 instances",
             "Type": "String",
@@ -271,76 +263,52 @@
         },
         "AWSRegionArch2AMI": {
             "us-east-1": {
-                "HVM64": "ami-0ff8a91507f77f867",
-                "HVMG2": "ami-0a584ac55a7631c0c"
+                "HVM64": "ami-0ac019f4fcb7cb7e6"
+            },
+            "us-east-2" : {
+                "HRM64": "ami-0f65671a86f061fcd"
             },
             "us-west-2": {
-                "HVM64": "ami-a0cfeed8",
-                "HVMG2": "ami-0e09505bc235aa82d"
+                "HVM64": "ami-0bbe6b35405ecebdb"
             },
             "us-west-1": {
-                "HVM64": "ami-0bdb828fd58c52235",
-                "HVMG2": "ami-066ee5fd4a9ef77f1"
+                "HVM64": "ami-063aa838bd7631e0b"
             },
             "eu-west-1": {
-                "HVM64": "ami-047bb4163c506cd98",
-                "HVMG2": "ami-0a7c483d527806435"
+                "HVM64": "ami-00035f41c82244dab"
             },
             "eu-west-2": {
-                "HVM64": "ami-f976839e",
-                "HVMG2": "NOT_SUPPORTED"
+                "HVM64": "ami-0b0a60c0a2bd40612"
             },
             "eu-west-3": {
-                "HVM64": "ami-0ebc281c20e89ba4b",
-                "HVMG2": "NOT_SUPPORTED"
+                "HVM64": "ami-08182c55a1c188dee"
             },
             "eu-central-1": {
-                "HVM64": "ami-0233214e13e500f77",
-                "HVMG2": "ami-06223d46a6d0661c7"
+                "HVM64": "ami-0bdf93799014acdc4"
             },
             "ap-northeast-1": {
-                "HVM64": "ami-06cd52961ce9f0d85",
-                "HVMG2": "ami-053cdd503598e4a9d"
+                "HVM64": "ami-07ad4b1c3af1ea214"
             },
             "ap-northeast-2": {
-                "HVM64": "ami-0a10b2721688ce9d2",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "ap-northeast-3": {
-                "HVM64": "ami-0d98120a9fb693f07",
-                "HVMG2": "NOT_SUPPORTED"
+                "HVM64": "ami-06e7b9c5e0c4dd014"
             },
             "ap-southeast-1": {
-                "HVM64": "ami-08569b978cc4dfa10",
-                "HVMG2": "ami-0be9df32ae9f92309"
+                "HVM64": "ami-0c5199d385b432989"
             },
             "ap-southeast-2": {
-                "HVM64": "ami-09b42976632b27e9b",
-                "HVMG2": "ami-0a9ce9fecc3d1daf8"
+                "HVM64": "ami-07a3bd4944eb120a0"
             },
             "ap-south-1": {
-                "HVM64": "ami-0912f71e06545ad88",
-                "HVMG2": "ami-097b15e89dbdcfcf4"
-            },
-            "us-east-2": {
-                "HVM64": "ami-0b59bfac6be064b78",
-                "HVMG2": "NOT_SUPPORTED"
+                "HVM64": "ami-0d773a3b7bb2bb1c1"
             },
             "ca-central-1": {
-                "HVM64": "ami-0b18956f",
-                "HVMG2": "NOT_SUPPORTED"
+                "HVM64": "ami-0427e8367e3770df1"
             },
             "sa-east-1": {
-                "HVM64": "ami-07b14488da8ea02a0",
-                "HVMG2": "NOT_SUPPORTED"
+                "HVM64": "ami-03c6239555bb12112"
             },
-            "cn-north-1": {
-                "HVM64": "ami-0a4eaf6c4454eda75",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "cn-northwest-1": {
-                "HVM64": "ami-6b6a7d09",
-                "HVMG2": "NOT_SUPPORTED"
+            "eu-north-1": {
+                "HVM64": "ami-34c14f4a"
             }
         }
     },
@@ -357,9 +325,8 @@
         "EC2Instance": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
-                "ImageId": {
-                    "Ref": "ImageId"
-                },
+                "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] } ] },
                 "InstanceType": {
                     "Ref": "InstanceType"
                 },
@@ -396,8 +363,7 @@
                                 "OCAdminPassword=\"", {"Ref" : "ownCloudPassword"},"\"\n",
                                 "\n",
                                 "IPA=`curl http://169.254.169.254/latest/meta-data/public-ipv4 | sed -r 's@\\.@-@g'`\n",
-                                "REGION='us-west-1'\n",
-                                "OCDomain=\"ec2-$IPA.$REGION.compute.amazonaws.com\" \n",
+                                "OCDomain=`curl http://169.254.169.254/latest/meta-data/local-ipv4`\n",
                                 "\n",
                                 "service mysql start\n",
                                 "\n",
