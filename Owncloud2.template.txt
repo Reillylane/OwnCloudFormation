@@ -1,0 +1,722 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Create a basic OwnCloud infrastructure using S3 and EC2. ***WARNING You will be billed for created resources***",
+    "Parameters": {
+        "InstanceType": {
+            "Description": "WebServer EC2 instance type",
+            "Type": "String",
+            "Default": "t2.micro",
+            "AllowedValues": [
+                "t1.micro",
+                "t2.nano",
+                "t2.micro",
+                "t2.small",
+                "t2.medium",
+                "t2.large",
+                "m1.small",
+                "m1.medium",
+                "m1.large",
+                "m1.xlarge",
+                "m2.xlarge",
+                "m2.2xlarge",
+                "m2.4xlarge",
+                "m3.medium",
+                "m3.large",
+                "m3.xlarge",
+                "m3.2xlarge",
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m4.4xlarge",
+                "m4.10xlarge",
+                "c1.medium",
+                "c1.xlarge",
+                "c3.large",
+                "c3.xlarge",
+                "c3.2xlarge",
+                "c3.4xlarge",
+                "c3.8xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "c4.2xlarge",
+                "c4.4xlarge",
+                "c4.8xlarge",
+                "g2.2xlarge",
+                "g2.8xlarge",
+                "r3.large",
+                "r3.xlarge",
+                "r3.2xlarge",
+                "r3.4xlarge",
+                "r3.8xlarge",
+                "i2.xlarge",
+                "i2.2xlarge",
+                "i2.4xlarge",
+                "i2.8xlarge",
+                "d2.xlarge",
+                "d2.2xlarge",
+                "d2.4xlarge",
+                "d2.8xlarge",
+                "hi1.4xlarge",
+                "hs1.8xlarge",
+                "cr1.8xlarge",
+                "cc2.8xlarge",
+                "cg1.4xlarge"
+            ],
+            "ConstraintDescription": "must be a valid EC2 instance type."
+        },
+        "ImageId": {
+            "Description": "EC2 Image ID - Ubuntu Server 18.04 LTS (HVM), SSD Volume Type",
+            "Type": "String",
+            "Default": "ami-063aa838bd7631e0b",
+            "AllowedValues": [
+                "ami-063aa838bd7631e0b"
+            ]
+        },
+        "SSHLocation": {
+            "Description": "The IP address range that can be used to SSH to the EC2 instances",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "18",
+            "Default": "0.0.0.0/0",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x"
+        },
+        "EC2AccessKey": {
+            "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+            "Type": "AWS::EC2::KeyPair::KeyName",
+            "ConstraintDescription" : "Can contain only ASCII characters."
+        }, 
+        "MySQLPassword": {
+            "Description": "The password for the MySQL DB associated with the OwnCloud Account.",
+            "Type": "String",
+            "MinLength": "8",
+            "MaxLength": "100",
+            "AllowedPattern": "[a-zA-Z0-9]+",
+            "ConstraintDescription": "Must be a alphanumeric password."
+        },
+        "ownCloudUserName": {
+            "Description": "The username for the ownCloud admin user account.",
+            "Type": "String",
+            "AllowedPattern": "[a-zA-Z0-9]+",
+            "ConstraintDescription": "Must contain an alphanumeric username."
+        },
+        "ownCloudPassword": {
+            "Description": "The password for the ownCloud admin user account.",
+            "Type": "String",
+            "AllowedPattern": "[a-zA-Z0-9]+",
+            "ConstraintDescription": "Must contain an alphanumeric username."
+        }
+    },
+    "Mappings": {
+        "AWSInstanceType2Arch": {
+            "t1.micro": {
+                "Arch": "HVM64"
+            },
+            "t2.nano": {
+                "Arch": "HVM64"
+            },
+            "t2.micro": {
+                "Arch": "HVM64"
+            },
+            "t2.small": {
+                "Arch": "HVM64"
+            },
+            "t2.medium": {
+                "Arch": "HVM64"
+            },
+            "t2.large": {
+                "Arch": "HVM64"
+            },
+            "m1.small": {
+                "Arch": "HVM64"
+            },
+            "m1.medium": {
+                "Arch": "HVM64"
+            },
+            "m1.large": {
+                "Arch": "HVM64"
+            },
+            "m1.xlarge": {
+                "Arch": "HVM64"
+            },
+            "m2.xlarge": {
+                "Arch": "HVM64"
+            },
+            "m2.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "m2.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "m3.medium": {
+                "Arch": "HVM64"
+            },
+            "m3.large": {
+                "Arch": "HVM64"
+            },
+            "m3.xlarge": {
+                "Arch": "HVM64"
+            },
+            "m3.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "m4.large": {
+                "Arch": "HVM64"
+            },
+            "m4.xlarge": {
+                "Arch": "HVM64"
+            },
+            "m4.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "m4.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "m4.10xlarge": {
+                "Arch": "HVM64"
+            },
+            "c1.medium": {
+                "Arch": "HVM64"
+            },
+            "c1.xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.large": {
+                "Arch": "HVM64"
+            },
+            "c3.xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "c4.large": {
+                "Arch": "HVM64"
+            },
+            "c4.xlarge": {
+                "Arch": "HVM64"
+            },
+            "c4.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "c4.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "c4.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "g2.2xlarge": {
+                "Arch": "HVMG2"
+            },
+            "g2.8xlarge": {
+                "Arch": "HVMG2"
+            },
+            "r3.large": {
+                "Arch": "HVM64"
+            },
+            "r3.xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "d2.xlarge": {
+                "Arch": "HVM64"
+            },
+            "d2.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "d2.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "d2.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "hi1.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "hs1.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "cr1.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "cc2.8xlarge": {
+                "Arch": "HVM64"
+            }
+        },
+        "AWSRegionArch2AMI": {
+            "us-east-1": {
+                "HVM64": "ami-0ff8a91507f77f867",
+                "HVMG2": "ami-0a584ac55a7631c0c"
+            },
+            "us-west-2": {
+                "HVM64": "ami-a0cfeed8",
+                "HVMG2": "ami-0e09505bc235aa82d"
+            },
+            "us-west-1": {
+                "HVM64": "ami-0bdb828fd58c52235",
+                "HVMG2": "ami-066ee5fd4a9ef77f1"
+            },
+            "eu-west-1": {
+                "HVM64": "ami-047bb4163c506cd98",
+                "HVMG2": "ami-0a7c483d527806435"
+            },
+            "eu-west-2": {
+                "HVM64": "ami-f976839e",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "eu-west-3": {
+                "HVM64": "ami-0ebc281c20e89ba4b",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "eu-central-1": {
+                "HVM64": "ami-0233214e13e500f77",
+                "HVMG2": "ami-06223d46a6d0661c7"
+            },
+            "ap-northeast-1": {
+                "HVM64": "ami-06cd52961ce9f0d85",
+                "HVMG2": "ami-053cdd503598e4a9d"
+            },
+            "ap-northeast-2": {
+                "HVM64": "ami-0a10b2721688ce9d2",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-northeast-3": {
+                "HVM64": "ami-0d98120a9fb693f07",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-southeast-1": {
+                "HVM64": "ami-08569b978cc4dfa10",
+                "HVMG2": "ami-0be9df32ae9f92309"
+            },
+            "ap-southeast-2": {
+                "HVM64": "ami-09b42976632b27e9b",
+                "HVMG2": "ami-0a9ce9fecc3d1daf8"
+            },
+            "ap-south-1": {
+                "HVM64": "ami-0912f71e06545ad88",
+                "HVMG2": "ami-097b15e89dbdcfcf4"
+            },
+            "us-east-2": {
+                "HVM64": "ami-0b59bfac6be064b78",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ca-central-1": {
+                "HVM64": "ami-0b18956f",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "sa-east-1": {
+                "HVM64": "ami-07b14488da8ea02a0",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "cn-north-1": {
+                "HVM64": "ami-0a4eaf6c4454eda75",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "cn-northwest-1": {
+                "HVM64": "ami-6b6a7d09",
+                "HVMG2": "NOT_SUPPORTED"
+            }
+        }
+    },
+    "Resources": {
+        "OwnCloudS3Bucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {},
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "8c538add-bde5-410c-9aae-469d59531b31"
+                }
+            }
+        },
+        "EC2Instance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": {
+                    "Ref": "ImageId"
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "WebServerSecurityGroup"
+                    }
+                ],
+                "KeyName": {
+                    "Ref": "EC2AccessKey"
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/sh\n",
+                                "echo \"---------Getting Apache and MySQL Packages\"\n",
+                                "apt update\n",
+                                "apt install -y apache2\n",
+                                "apt install -y mariadb-server\n",
+                                "apt install -y expect\n",
+                                "\n",
+                                "#Configure MySQL\n",
+                                "MYSQLROOTPW='", {"Ref": "MySQLPassword"}, "'\n",
+                                "MYSQLOwnCloudPW='", {"Ref" : "ownCloudPassword"}, "'\n",
+                                "\n",
+                                "AWSBucketName='", {"Ref" : "OwnCloudS3Bucket"}, "'\n",
+                                "AWSRegion='", {"Ref" : "AWS::Region"}, "'\n",
+                                "AWSUserKey='", {"Ref" : "AccessKey"}, "'\n",
+                                "AWSUserSecret='", {"Fn::GetAtt": ["AccessKey", "SecretAccessKey"]}, "'\n",
+                                "\n",
+                                "OCAdminUser=\"", {"Ref" : "ownCloudUserName"},"\"\n",
+                                "OCAdminPassword=\"", {"Ref" : "ownCloudPassword"},"\"\n",
+                                "\n",
+                                "IPA=`curl http://169.254.169.254/latest/meta-data/public-ipv4 | sed -r 's@\\.@-@g'`\n",
+                                "REGION='us-west-1'\n",
+                                "OCDomain=\"ec2-$IPA.$REGION.compute.amazonaws.com\" \n",
+                                "\n",
+                                "service mysql start\n",
+                                "\n",
+                                "expect -c \"\n",
+                                "set timeout 10\n",
+                                "spawn mysql_secure_installation\n",
+                                "expect \\\"Enter current password for root (enter for none):\\\"\n",
+                                "send \\\"\\r\\\"\n",
+                                "expect \\\"Change the root password?\\\"\n",
+                                "send \\\"Y\\r\\\"\n",
+                                "expect \\\"New Password:\\\"\n",
+                                "send \\\"$MYSLQPW\\r\\\"\n",
+                                "expect \\\"Re-enter new Password:\\\"\n",
+                                "send \\\"$MYSLQPW\\r\\\"\n",
+                                "expect \\\"Remove anonymous users?\\\"\n",
+                                "send \\\"y\\r\\\"\n",
+                                "expect \\\"Disallow root login remotely?\\\"\n",
+                                "send \\\"y\\r\\\"\n",
+                                "expect \\\"Remove test database and access to it?\\\"\n",
+                                "send \\\"y\\r\\\"\n",
+                                "expect \\\"Reload privilege tables now?\\\"\n",
+                                "send \\\"y\\r\\\"\n",
+                                "expect eof\n",
+                                "\"\n",
+                                "\n",
+                                "apt -y purge expect\n",
+                                "\n",
+                                "#Create MySql User\n",
+                                "echo \"---------Create Mysql User\"\n",
+                                "mysql -u root -p$MYSQLROOTPW -e \"Create DATABASE Owncloud;\"\n",
+                                "mysql -u root -p$MYSQLROOTPW -e \"Grant ALL ON Owncloud.* to 'owncloud'@'localhost' IDENTIFIED BY '$MYSQLOwnCloudPW';\"\n",
+                                "mysql -u root -p$MYSQLROOTPW -e \"Flush Privileges\"\n",
+                                "\n",
+                                "\n",
+                                "\n",
+                                "#Install PHP\n",
+                                "echo \"---------Installing PHP\"\n",
+                                "apt -y install php libapache2-mod-php php-mysql  \n",
+                                "\n",
+                                "#Install Owncloud\n",
+                                "echo \"---------Installing Owncloud\"\n",
+                                "curl https://download.ownCloud.org/download/repositories/10.0/Ubuntu_18.04/Release.key | sudo apt-key add - \n",
+                                "echo 'deb http://download.ownCloud.org/download/repositories/10.0/Ubuntu_18.04/ /' | sudo tee /etc/apt/sources.list.d/ownCloud.list  \n",
+                                "apt update  \n",
+                                "apt -y install php-bz2 php-curl php-gd php-imagick php-intl php-mbstring php-xml php-zip owncloud-files  \n",
+                                "\n",
+                                "#Configure Apache with owncloud directory\n",
+                                "echo \"---------updating apache config file\"\n",
+                                "sed -i 's@DocumentRoot /var/www/html@DocumentRoot /var/www/owncloud@' /etc/apache2/sites-enabled/000-default.conf\n",
+                                "\n",
+                                "service apache2 restart\n",
+                                "\n",
+                                "#Download S3 owncloud libraries\n",
+                                "echo \"---------downloading and install s3 library and config\"\n",
+                                "cd ~\n",
+                                "git clone https://github.com/Reillylane/aws_student_lab_files.git\n",
+                                "\n",
+                                "cp -R aws_student_lab_files/ /var/www/owncloud/apps/files_primary_s3\n",
+                                "\n",
+                                "#Create Config File\n",
+                                "sudo -u www-data printf \"\n",
+                                "<?php\n",
+                                "\\$CONFIG = array (\n",
+                                "  'objectstore' =>\n",
+                                "  array (\n",
+                                "    'class' => 'OCA\\\\Files_Primary_S3\\\\S3Storage',\n",
+                                "    'arguments' =>\n",
+                                "    array (\n",
+                                "      'bucket' => '$AWSBucketName',\n",
+                                "      'options' =>\n",
+                                "      array (\n",
+                                "        'version' => '2006-03-01',\n",
+                                "        'region' => '$AWSRegion',\n",
+                                "        'credentials' =>\n",
+                                "        array (\n",
+                                "          'key' => '$AWSUserKey',\n",
+                                "          'secret' => '$AWSUserSecret',\n",
+                                "        ),\n",
+                                "      ),\n",
+                                "    ),\n",
+                                "  ),\n",
+                                "  'trusted_domains' =>\n",
+                                "  array (\n",
+                                "    0 => '$OCDomain',\n",
+                                "  ),\n",
+                                ");\n",
+                                "\" > /var/www/owncloud/config/config.php\n",
+                                "chown www-data:www-data /var/www/owncloud/config/config.php\n",
+                                "\n",
+                                "sudo -u www-data php /var/www/owncloud/occ maintenance:install --database \"mysql\" --database-name \"Owncloud\"  --database-user \"owncloud\" --database-pass \"$MYSQLOwnCloudPW\" --admin-user \"$OCAdminUser\" --admin-pass \"$OCAdminPassword\"\n",
+                                "\n",
+                                "echo \"$OCDomain\"\n",
+                                "sudo -u www-data php /var/www/owncloud/occ config:system:set trusted_domains 0 --value $OCDomain \n",
+                                "echo \"---------done\"\n",
+                                "\n"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "config" : {
+                        
+                    }
+                },
+                "AWS::CloudFormation::Designer": {
+                    "id": "d3238932-62b5-4bd9-a90b-2e029c076677"
+                }
+            }
+        },
+        "WebServerSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Enable HTTP access via port 80",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "22",
+                        "ToPort": "22",
+                        "CidrIp": {
+                            "Ref": "SSHLocation"
+                        }
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "30a2304b-32c6-4aae-900d-5fa710ba64e5"
+                }
+            }
+        },
+        "IAMPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "root",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:GetBucketLocation",
+                                "s3:ListAllMyBuckets"
+                            ],
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:ListBucket"
+                            ],
+                            "Resource": {
+                                "Fn::Join": [
+                                    "",
+                                    [
+                                        "arn:aws:s3:::",
+                                        {
+                                            "Ref": "OwnCloudS3Bucket"
+                                        }
+                                    ]
+                                ]
+                            }
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:PutObject",
+                                "s3:GetObject"
+                            ],
+                            "Resource": {
+                                "Fn::Join": [
+                                    "",
+                                    [
+                                        "arn:aws:s3:::",
+                                        {
+                                            "Ref": "OwnCloudS3Bucket"
+                                        },
+                                        "/*"
+                                    ]
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "Users": [
+                    {
+                        "Ref": "OwnCloudUser"
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "92b86bb8-e1c1-449b-aa46-85cb85f4befd"
+                }
+            }
+        },
+        "OwnCloudUser": {
+            "Type": "AWS::IAM::User",
+            "Properties": {},
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "7d586ace-3310-436b-8cfd-5bcc462a6a16"
+                }
+            }
+        },
+        "AccessKey" : {
+            "Description" : "Name of an existing KeyPair to assign to user.",
+            "Type" : "AWS::IAM::AccessKey",
+            "Properties" : {
+                "UserName" : {"Ref": "OwnCloudUser"}
+            }
+        }
+    },
+    "Outputs": {
+        "WebsiteURL": {
+            "Description": "URL for newly created EC2 instance",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "http://",
+                        {
+                            "Fn::GetAtt": [
+                                "EC2Instance",
+                                "PublicDnsName"
+                            ]
+                        }
+                    ]
+                ]
+            }
+        }
+    },
+    "Metadata": {
+        "AWS::CloudFormation::Designer": {
+            "30a2304b-32c6-4aae-900d-5fa710ba64e5": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 60,
+                    "y": 90
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "8c538add-bde5-410c-9aae-469d59531b31": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 60,
+                    "y": 180
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "21830f3d-0cb5-4bde-ac8e-e728df2ba41b": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 450,
+                    "y": 180
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "7d586ace-3310-436b-8cfd-5bcc462a6a16": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 330,
+                    "y": 180
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "92b86bb8-e1c1-449b-aa46-85cb85f4befd": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 180,
+                    "y": 180
+                },
+                "z": 1,
+                "embeds": [],
+                "isassociatedwith": [
+                    "7d586ace-3310-436b-8cfd-5bcc462a6a16"
+                ]
+            },
+            "d3238932-62b5-4bd9-a90b-2e029c076677": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 540,
+                    "y": 90
+                },
+                "z": 1,
+                "embeds": [],
+                "isassociatedwith": [
+                    "30a2304b-32c6-4aae-900d-5fa710ba64e5"
+                ]
+            }
+        }
+    }
+}
